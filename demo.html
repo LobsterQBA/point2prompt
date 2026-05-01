@@ -1,0 +1,936 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Tiny Trips Club - Point2Prompt Demo</title>
+    <meta
+      name="description"
+      content="A bright fake vibe-coded travel website for testing Point2Prompt."
+    />
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #18202a;
+        --muted: #637084;
+        --paper: #f6fbff;
+        --blue: #1f8fff;
+        --sky: #bce9ff;
+        --yellow: #ffe45d;
+        --orange: #ff8b3d;
+        --pink: #ff6fae;
+        --green: #4ed37a;
+        --line: #1c2633;
+        --soft: rgba(28, 38, 51, 0.1);
+        --display: "Trebuchet MS", "Avenir Next", ui-sans-serif, sans-serif;
+        --body: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        --mono: "SFMono-Regular", Consolas, monospace;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        background: var(--paper);
+      }
+
+      body {
+        min-height: 100vh;
+        margin: 0;
+        color: var(--ink);
+        font-family: var(--body);
+        background:
+          radial-gradient(circle at 12% 16%, rgba(255, 228, 93, 0.8), transparent 16%),
+          radial-gradient(circle at 88% 10%, rgba(255, 111, 174, 0.35), transparent 18%),
+          radial-gradient(circle at 76% 88%, rgba(78, 211, 122, 0.32), transparent 20%),
+          linear-gradient(180deg, #f6fbff 0%, #eef8ff 50%, #fff7ec 100%);
+        overflow-x: hidden;
+      }
+
+      body::before {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        content: "";
+        opacity: 0.18;
+        background-image:
+          linear-gradient(45deg, var(--line) 25%, transparent 25%),
+          linear-gradient(-45deg, var(--line) 25%, transparent 25%);
+        background-position: 0 0, 0 14px;
+        background-size: 28px 28px;
+        mask-image: linear-gradient(to bottom, #000 0%, transparent 62%);
+      }
+
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+
+      button {
+        color: inherit;
+        font: inherit;
+      }
+
+      .shell {
+        position: relative;
+        width: min(1180px, calc(100vw - 32px));
+        margin: 0 auto;
+      }
+
+      .nav {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 24px;
+        padding: 18px 0;
+      }
+
+      .brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 14px;
+        font-weight: 900;
+        background: #fff;
+        border: 2px solid var(--line);
+        border-radius: 999px;
+        box-shadow: 4px 4px 0 var(--line);
+      }
+
+      .brand-mark {
+        display: grid;
+        place-items: center;
+        width: 28px;
+        height: 28px;
+        color: #fff;
+        font-size: 15px;
+        font-weight: 900;
+        background: var(--blue);
+        border: 2px solid var(--line);
+        border-radius: 50%;
+      }
+
+      .nav-links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        justify-content: flex-end;
+      }
+
+      .nav-links a {
+        padding: 10px 13px;
+        font-size: 14px;
+        font-weight: 800;
+        background: rgba(255, 255, 255, 0.82);
+        border: 2px solid var(--line);
+        border-radius: 999px;
+      }
+
+      .hero {
+        display: grid;
+        grid-template-columns: minmax(0, 0.9fr) minmax(360px, 0.78fr);
+        gap: 46px;
+        align-items: center;
+        min-height: calc(100vh - 86px);
+        padding: 44px 0 54px;
+      }
+
+      .sticker {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 22px;
+        padding: 9px 13px;
+        color: var(--ink);
+        font-family: var(--mono);
+        font-size: 12px;
+        font-weight: 900;
+        text-transform: uppercase;
+        background: var(--yellow);
+        border: 2px solid var(--line);
+        border-radius: 999px;
+        box-shadow: 4px 4px 0 var(--line);
+        transform: rotate(-2deg);
+      }
+
+      h1 {
+        max-width: 780px;
+        margin: 0;
+        font-family: var(--display);
+        font-size: clamp(58px, 9vw, 126px);
+        font-weight: 950;
+        line-height: 0.88;
+        letter-spacing: 0;
+      }
+
+      .hero-lede {
+        max-width: 620px;
+        margin: 26px 0 0;
+        color: var(--muted);
+        font-size: 20px;
+        line-height: 1.55;
+      }
+
+      .hero-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 30px;
+      }
+
+      .button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 52px;
+        padding: 0 18px;
+        font-weight: 900;
+        border: 2px solid var(--line);
+        border-radius: 16px;
+        cursor: pointer;
+      }
+
+      .button.primary {
+        color: #fff;
+        background: var(--blue);
+        box-shadow: 6px 6px 0 var(--line);
+      }
+
+      .button.secondary {
+        background: #fff;
+      }
+
+      .trip-board {
+        position: relative;
+        min-height: 610px;
+      }
+
+      .phone {
+        position: absolute;
+        top: 16px;
+        right: 34px;
+        width: min(330px, 76vw);
+        min-height: 570px;
+        padding: 18px;
+        background: #fff;
+        border: 3px solid var(--line);
+        border-radius: 34px;
+        box-shadow: 14px 14px 0 var(--line);
+        transform: rotate(3deg);
+      }
+
+      .phone-bar {
+        width: 88px;
+        height: 10px;
+        margin: 0 auto 18px;
+        background: var(--line);
+        border-radius: 999px;
+      }
+
+      .photo-card {
+        position: relative;
+        min-height: 210px;
+        overflow: hidden;
+        background:
+          radial-gradient(circle at 28% 30%, #fff 0 14px, transparent 15px),
+          radial-gradient(circle at 70% 38%, rgba(255, 255, 255, 0.75) 0 18px, transparent 19px),
+          linear-gradient(160deg, var(--sky) 0 42%, var(--green) 42% 58%, var(--orange) 58%);
+        border: 2px solid var(--line);
+        border-radius: 24px;
+      }
+
+      .photo-card::after {
+        position: absolute;
+        right: -24px;
+        bottom: -18px;
+        width: 150px;
+        height: 150px;
+        content: "";
+        background:
+          radial-gradient(circle at 50% 50%, var(--yellow) 0 22px, transparent 23px),
+          repeating-conic-gradient(from 0deg, var(--line) 0 12deg, transparent 12deg 24deg);
+        border-radius: 50%;
+      }
+
+      .phone-title {
+        margin: 18px 0 8px;
+        font-size: 27px;
+        font-weight: 950;
+        line-height: 1.03;
+      }
+
+      .phone-copy {
+        margin: 0;
+        color: var(--muted);
+        font-size: 14px;
+        line-height: 1.45;
+      }
+
+      .mini-plan {
+        display: grid;
+        gap: 10px;
+        margin-top: 18px;
+      }
+
+      .mini-row {
+        display: grid;
+        grid-template-columns: 44px 1fr auto;
+        gap: 10px;
+        align-items: center;
+        padding: 10px;
+        background: #f4f8ff;
+        border: 2px solid var(--line);
+        border-radius: 16px;
+      }
+
+      .mini-time {
+        font-family: var(--mono);
+        font-size: 11px;
+        font-weight: 900;
+      }
+
+      .mini-title {
+        overflow: hidden;
+        font-size: 13px;
+        font-weight: 850;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .mini-tag {
+        padding: 5px 7px;
+        font-size: 10px;
+        font-weight: 900;
+        background: var(--yellow);
+        border: 2px solid var(--line);
+        border-radius: 999px;
+      }
+
+      .passport {
+        position: absolute;
+        left: 0;
+        bottom: 46px;
+        width: 260px;
+        padding: 20px;
+        background: var(--pink);
+        border: 3px solid var(--line);
+        border-radius: 24px;
+        box-shadow: 10px 10px 0 var(--line);
+        transform: rotate(-7deg);
+      }
+
+      .passport-label {
+        font-family: var(--mono);
+        font-size: 12px;
+        font-weight: 900;
+        text-transform: uppercase;
+      }
+
+      .passport h2 {
+        margin: 40px 0 0;
+        color: #fff;
+        font-family: var(--display);
+        font-size: 42px;
+        line-height: 0.9;
+      }
+
+      .floating-note {
+        position: absolute;
+        top: 92px;
+        left: 22px;
+        width: 210px;
+        padding: 16px;
+        background: #fff;
+        border: 3px solid var(--line);
+        border-radius: 20px;
+        box-shadow: 8px 8px 0 var(--line);
+        transform: rotate(-4deg);
+      }
+
+      .floating-note strong {
+        display: block;
+        font-size: 16px;
+        line-height: 1.15;
+      }
+
+      .floating-note p {
+        margin: 8px 0 0;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.4;
+      }
+
+      .section {
+        padding: 70px 0;
+      }
+
+      .section-head {
+        display: grid;
+        grid-template-columns: minmax(0, 0.66fr) minmax(260px, 0.34fr);
+        gap: 34px;
+        align-items: end;
+        margin-bottom: 28px;
+      }
+
+      h2 {
+        margin: 0;
+        font-family: var(--display);
+        font-size: clamp(42px, 6vw, 82px);
+        font-weight: 950;
+        line-height: 0.92;
+      }
+
+      .section-head p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 17px;
+        line-height: 1.55;
+      }
+
+      .cards {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 16px;
+      }
+
+      .card {
+        min-height: 245px;
+        padding: 18px;
+        background: #fff;
+        border: 3px solid var(--line);
+        border-radius: 28px;
+        box-shadow: 7px 7px 0 var(--line);
+      }
+
+      .card:nth-child(2) {
+        margin-top: 28px;
+        background: #e8fff0;
+      }
+
+      .card:nth-child(3) {
+        background: #fff6bf;
+      }
+
+      .card:nth-child(4) {
+        margin-top: 14px;
+        background: #eff3ff;
+      }
+
+      .card-icon {
+        display: grid;
+        place-items: center;
+        width: 54px;
+        height: 54px;
+        margin-bottom: 36px;
+        color: #fff;
+        font-weight: 950;
+        background: var(--blue);
+        border: 2px solid var(--line);
+        border-radius: 18px;
+      }
+
+      .card:nth-child(2) .card-icon {
+        background: var(--green);
+      }
+
+      .card:nth-child(3) .card-icon {
+        color: var(--ink);
+        background: var(--yellow);
+      }
+
+      .card:nth-child(4) .card-icon {
+        background: var(--pink);
+      }
+
+      .card h3 {
+        margin: 0;
+        font-size: 21px;
+        line-height: 1.12;
+      }
+
+      .card p {
+        margin: 12px 0 0;
+        color: var(--muted);
+        line-height: 1.48;
+      }
+
+      .planner {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(340px, 0.7fr);
+        gap: 18px;
+        align-items: stretch;
+      }
+
+      .map {
+        min-height: 430px;
+        padding: 20px;
+        background:
+          linear-gradient(90deg, transparent 49%, rgba(28, 38, 51, 0.1) 50%, transparent 51%),
+          linear-gradient(0deg, transparent 49%, rgba(28, 38, 51, 0.1) 50%, transparent 51%),
+          #fff;
+        background-size: 78px 78px;
+        border: 3px solid var(--line);
+        border-radius: 34px;
+        box-shadow: 9px 9px 0 var(--line);
+      }
+
+      .map-title {
+        display: flex;
+        justify-content: space-between;
+        gap: 18px;
+        align-items: center;
+      }
+
+      .map-title strong {
+        font-size: 24px;
+      }
+
+      .map-title span {
+        padding: 7px 10px;
+        font-family: var(--mono);
+        font-size: 11px;
+        font-weight: 900;
+        background: var(--yellow);
+        border: 2px solid var(--line);
+        border-radius: 999px;
+      }
+
+      .route {
+        position: relative;
+        min-height: 300px;
+        margin-top: 28px;
+      }
+
+      .route-line {
+        position: absolute;
+        top: 54px;
+        left: 54px;
+        width: 70%;
+        height: 160px;
+        border: 5px solid var(--blue);
+        border-right: 0;
+        border-bottom: 0;
+        border-radius: 80px 0 0 0;
+      }
+
+      .pin {
+        position: absolute;
+        display: grid;
+        place-items: center;
+        width: 72px;
+        height: 72px;
+        font-weight: 950;
+        background: var(--orange);
+        border: 3px solid var(--line);
+        border-radius: 50% 50% 50% 8px;
+        transform: rotate(-45deg);
+        box-shadow: 5px 5px 0 var(--line);
+      }
+
+      .pin span {
+        transform: rotate(45deg);
+      }
+
+      .pin.one {
+        top: 18px;
+        left: 18px;
+      }
+
+      .pin.two {
+        top: 110px;
+        left: 46%;
+        background: var(--green);
+      }
+
+      .pin.three {
+        right: 36px;
+        bottom: 18px;
+        background: var(--pink);
+      }
+
+      .itinerary {
+        display: grid;
+        gap: 12px;
+      }
+
+      .stop {
+        display: grid;
+        grid-template-columns: 58px 1fr;
+        gap: 12px;
+        align-items: start;
+        padding: 16px;
+        background: #fff;
+        border: 3px solid var(--line);
+        border-radius: 24px;
+      }
+
+      .stop-time {
+        padding: 8px 6px;
+        text-align: center;
+        font-family: var(--mono);
+        font-size: 11px;
+        font-weight: 900;
+        background: var(--sky);
+        border: 2px solid var(--line);
+        border-radius: 14px;
+      }
+
+      .stop h3 {
+        margin: 0;
+        font-size: 18px;
+      }
+
+      .stop p {
+        margin: 6px 0 0;
+        color: var(--muted);
+        font-size: 14px;
+        line-height: 1.42;
+      }
+
+      .pricing {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 16px;
+      }
+
+      .plan {
+        min-height: 310px;
+        padding: 20px;
+        background: #fff;
+        border: 3px solid var(--line);
+        border-radius: 30px;
+        box-shadow: 8px 8px 0 var(--line);
+      }
+
+      .plan.featured {
+        background: var(--yellow);
+        transform: rotate(1deg);
+      }
+
+      .plan-name {
+        display: inline-flex;
+        padding: 8px 10px;
+        font-family: var(--mono);
+        font-size: 11px;
+        font-weight: 900;
+        text-transform: uppercase;
+        background: #fff;
+        border: 2px solid var(--line);
+        border-radius: 999px;
+      }
+
+      .price {
+        margin-top: 34px;
+        font-family: var(--display);
+        font-size: 58px;
+        font-weight: 950;
+        line-height: 0.92;
+      }
+
+      .price span {
+        color: var(--muted);
+        font-family: var(--body);
+        font-size: 15px;
+      }
+
+      .plan p {
+        margin: 18px 0 0;
+        color: var(--muted);
+        line-height: 1.5;
+      }
+
+      .plan ul {
+        display: grid;
+        gap: 9px;
+        margin: 22px 0 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .plan li {
+        font-weight: 750;
+      }
+
+      .plan li::before {
+        margin-right: 8px;
+        color: var(--blue);
+        content: "/";
+      }
+
+      .footer {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        gap: 18px;
+        padding: 34px 0 48px;
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+
+      @media (max-width: 920px) {
+        .hero,
+        .section-head,
+        .planner {
+          grid-template-columns: 1fr;
+        }
+
+        .hero {
+          min-height: 0;
+        }
+
+        .trip-board {
+          min-height: 650px;
+        }
+
+        .cards,
+        .pricing {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+
+      @media (max-width: 640px) {
+        .nav {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+
+        .nav-links {
+          justify-content: flex-start;
+        }
+
+        h1 {
+          font-size: 58px;
+        }
+
+        .phone {
+          right: 0;
+          width: 100%;
+          transform: none;
+        }
+
+        .floating-note,
+        .passport {
+          display: none;
+        }
+
+        .cards,
+        .pricing {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="shell nav">
+      <a class="brand" href="#">
+        <span class="brand-mark" aria-hidden="true">T</span>
+        <span>Tiny Trips Club</span>
+      </a>
+      <nav class="nav-links" aria-label="Main navigation">
+        <a href="#ideas">Trip ideas</a>
+        <a href="#planner">Planner</a>
+        <a href="#pricing">Pricing</a>
+        <a href="index.html">Point2Prompt</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="shell hero">
+        <div>
+          <div class="sticker">Fake vibe-coded travel app</div>
+          <h1>Turn one free Saturday into a tiny adventure.</h1>
+          <p class="hero-lede">
+            Tiny Trips Club builds playful, low-effort day trips from your mood,
+            budget, weather, and tolerance for planning tabs.
+          </p>
+          <div class="hero-actions">
+            <button class="button primary" type="button">Plan my tiny trip</button>
+            <button class="button secondary" type="button">See weekend ideas</button>
+          </div>
+        </div>
+
+        <aside class="trip-board" aria-label="Trip planner preview">
+          <div class="floating-note">
+            <strong>Perfect for a Point2Prompt demo</strong>
+            <p>Select this note, the headline, cards, map pins, or pricing rows.</p>
+          </div>
+
+          <div class="phone">
+            <div class="phone-bar"></div>
+            <div class="photo-card" aria-hidden="true"></div>
+            <h2 class="phone-title">Saturday in Santa Cruz</h2>
+            <p class="phone-copy">
+              Pastries, tide pools, bookshops, and a sunset train ride home.
+            </p>
+            <div class="mini-plan">
+              <div class="mini-row">
+                <span class="mini-time">9:20</span>
+                <span class="mini-title">Grab almond croissants near the station</span>
+                <span class="mini-tag">Food</span>
+              </div>
+              <div class="mini-row">
+                <span class="mini-time">11:10</span>
+                <span class="mini-title">Walk the cliff path before the wind picks up</span>
+                <span class="mini-tag">View</span>
+              </div>
+              <div class="mini-row">
+                <span class="mini-time">3:40</span>
+                <span class="mini-title">Find the tiny used bookstore with the blue door</span>
+                <span class="mini-tag">Shop</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="passport">
+            <div class="passport-label">Micro escape pass</div>
+            <h2>3 stops. 1 train. Zero spreadsheets.</h2>
+          </div>
+        </aside>
+      </section>
+
+      <section class="shell section" id="ideas">
+        <div class="section-head">
+          <h2>Pick a mood. Get a route that does not feel algorithmic.</h2>
+          <p>
+            These repeated cards are useful for testing Shift-click multi-select
+            and per-element instructions in Point2Prompt.
+          </p>
+        </div>
+
+        <div class="cards">
+          <article class="card">
+            <div class="card-icon">01</div>
+            <h3>Rainy bookstore crawl</h3>
+            <p>
+              Cozy cafes, secondhand shelves, covered transit, and one excellent
+              soup stop.
+            </p>
+          </article>
+          <article class="card">
+            <div class="card-icon">02</div>
+            <h3>Golden hour picnic loop</h3>
+            <p>
+              A short train ride, a market basket, and a park bench timed for
+              the softest light.
+            </p>
+          </article>
+          <article class="card">
+            <div class="card-icon">03</div>
+            <h3>Low-social solo reset</h3>
+            <p>
+              Quiet museums, scenic walks, and places where nobody asks what you
+              do for work.
+            </p>
+          </article>
+          <article class="card">
+            <div class="card-icon">04</div>
+            <h3>Maximum snack density</h3>
+            <p>
+              A route optimized for dumplings, fruit stands, bakeries, and tiny
+              counters with no website.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section class="shell section" id="planner">
+        <div class="section-head">
+          <h2>A map, a mood board, and an itinerary walk into a weekend.</h2>
+          <p>
+            This section gives you a different demo surface: map pins, route
+            labels, itinerary rows, and dense repeated text.
+          </p>
+        </div>
+
+        <div class="planner">
+          <div class="map">
+            <div class="map-title">
+              <strong>Generated route map</strong>
+              <span>4.8 miles</span>
+            </div>
+            <div class="route">
+              <div class="route-line" aria-hidden="true"></div>
+              <div class="pin one"><span>A</span></div>
+              <div class="pin two"><span>B</span></div>
+              <div class="pin three"><span>C</span></div>
+            </div>
+          </div>
+
+          <div class="itinerary">
+            <article class="stop">
+              <div class="stop-time">10 AM</div>
+              <div>
+                <h3>Coffee with a ridiculous pastry case</h3>
+                <p>Start with caffeine and something flaky before the first walk.</p>
+              </div>
+            </article>
+            <article class="stop">
+              <div class="stop-time">12 PM</div>
+              <div>
+                <h3>Neighborhood walk with two optional detours</h3>
+                <p>The route stays flexible if the weather or conversation changes.</p>
+              </div>
+            </article>
+            <article class="stop">
+              <div class="stop-time">4 PM</div>
+              <div>
+                <h3>Sunset stop that feels more planned than it was</h3>
+                <p>Arrive at the right minute without doing calendar math.</p>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="shell section" id="pricing">
+        <div class="section-head">
+          <h2>Plans for people allergic to overplanning.</h2>
+          <p>
+            Pricing blocks are great for recording: select the plan title,
+            rewrite the CTA, or multi-select feature rows.
+          </p>
+        </div>
+
+        <div class="pricing">
+          <article class="plan">
+            <div class="plan-name">Daydreamer</div>
+            <div class="price">$0 <span>/ month</span></div>
+            <p>For saving trip ideas you may or may not actually do.</p>
+            <ul>
+              <li>3 saved routes</li>
+              <li>Weather-aware ideas</li>
+              <li>Manual itinerary edits</li>
+            </ul>
+          </article>
+          <article class="plan featured">
+            <div class="plan-name">Weekend Regular</div>
+            <div class="price">$12 <span>/ month</span></div>
+            <p>For people who want one surprisingly good plan every week.</p>
+            <ul>
+              <li>Unlimited tiny trips</li>
+              <li>Transit and budget filters</li>
+              <li>Shared group voting</li>
+            </ul>
+          </article>
+          <article class="plan">
+            <div class="plan-name">Friend Group</div>
+            <div class="price">$29 <span>/ month</span></div>
+            <p>For the person who always ends up planning for everyone else.</p>
+            <ul>
+              <li>Group mood matching</li>
+              <li>Polls and availability</li>
+              <li>Exportable trip cards</li>
+            </ul>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <footer class="shell footer">
+      <span>Demo page for Point2Prompt recording.</span>
+      <span>Try: select the headline, shift-click trip cards, copy a change brief.</span>
+    </footer>
+  </body>
+</html>

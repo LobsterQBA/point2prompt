@@ -1,0 +1,760 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Point2Prompt - Visual prompts for AI coding agents</title>
+    <meta
+      name="description"
+      content="Select UI elements in the browser, add change instructions, and copy an AI-ready prompt for Claude Code, Codex, Cursor, or GitHub issues."
+    />
+    <style>
+      :root {
+        color-scheme: dark;
+        --ink: #f5f1e8;
+        --muted: #a8a096;
+        --dim: #6f6961;
+        --line: rgba(245, 241, 232, 0.16);
+        --line-strong: rgba(245, 241, 232, 0.32);
+        --field: rgba(255, 255, 255, 0.065);
+        --paper: #11100e;
+        --panel: #191714;
+        --panel-2: #232018;
+        --acid: #c6ff3d;
+        --blue: #65d6ff;
+        --coral: #ff6b57;
+        --shadow: 0 24px 80px rgba(0, 0, 0, 0.42);
+        --mono: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
+        --display: "Instrument Serif", Georgia, serif;
+        --body: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        min-height: 100%;
+        background: var(--paper);
+      }
+
+      body {
+        min-height: 100vh;
+        margin: 0;
+        color: var(--ink);
+        font-family: var(--body);
+        background:
+          radial-gradient(circle at 14% 20%, rgba(198, 255, 61, 0.13), transparent 28%),
+          radial-gradient(circle at 86% 10%, rgba(101, 214, 255, 0.13), transparent 26%),
+          linear-gradient(135deg, rgba(255, 255, 255, 0.045) 1px, transparent 1px),
+          #11100e;
+        background-size: auto, auto, 26px 26px, auto;
+        overflow-x: hidden;
+      }
+
+      body::before {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        content: "";
+        opacity: 0.32;
+        background-image: linear-gradient(rgba(245, 241, 232, 0.08) 1px, transparent 1px);
+        background-size: 100% 84px;
+        mask-image: linear-gradient(to bottom, #000, transparent 78%);
+      }
+
+      a {
+        color: inherit;
+      }
+
+      .shell {
+        width: min(1180px, calc(100vw - 32px));
+        margin: 0 auto;
+      }
+
+      .nav {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        min-height: 76px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-weight: 760;
+        letter-spacing: 0;
+      }
+
+      .mark {
+        position: relative;
+        width: 32px;
+        height: 32px;
+        border: 1px solid var(--line-strong);
+        background: linear-gradient(135deg, var(--panel), var(--panel-2));
+        box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.35);
+      }
+
+      .mark::before,
+      .mark::after {
+        position: absolute;
+        content: "";
+        background: var(--acid);
+      }
+
+      .mark::before {
+        top: 7px;
+        left: 7px;
+        width: 16px;
+        height: 2px;
+      }
+
+      .mark::after {
+        top: 7px;
+        left: 7px;
+        width: 2px;
+        height: 16px;
+      }
+
+      .nav-links {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .nav-links a {
+        text-decoration: none;
+      }
+
+      .hero {
+        display: grid;
+        grid-template-columns: minmax(0, 1.08fr) minmax(340px, 0.72fr);
+        gap: 42px;
+        align-items: end;
+        min-height: calc(100vh - 76px);
+        padding: 66px 0 54px;
+      }
+
+      .eyebrow {
+        display: inline-grid;
+        grid-template-columns: auto 1fr;
+        align-items: center;
+        gap: 10px;
+        margin: 0 0 24px;
+        color: var(--acid);
+        font-family: var(--mono);
+        font-size: 12px;
+        text-transform: uppercase;
+      }
+
+      .eyebrow::before {
+        width: 42px;
+        height: 1px;
+        content: "";
+        background: var(--acid);
+      }
+
+      h1 {
+        max-width: 800px;
+        margin: 0;
+        font-family: var(--display);
+        font-size: clamp(64px, 11vw, 148px);
+        font-weight: 520;
+        line-height: 0.86;
+        letter-spacing: 0;
+      }
+
+      .lede {
+        max-width: 660px;
+        margin: 30px 0 0;
+        color: var(--muted);
+        font-size: 20px;
+        line-height: 1.55;
+      }
+
+      .install-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 14px;
+        margin-top: 34px;
+      }
+
+      .bookmarklet {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        min-height: 52px;
+        padding: 0 20px;
+        color: #11100e;
+        font-weight: 820;
+        text-decoration: none;
+        background: var(--acid);
+        border: 1px solid rgba(0, 0, 0, 0.55);
+        box-shadow: 6px 6px 0 #000, 0 0 0 1px rgba(245, 241, 232, 0.18);
+        cursor: grab;
+        transition: transform 180ms ease, box-shadow 180ms ease;
+      }
+
+      .bookmarklet:hover {
+        transform: translate(-2px, -2px);
+        box-shadow: 8px 8px 0 #000, 0 0 0 1px rgba(245, 241, 232, 0.18);
+      }
+
+      .bookmarklet:active {
+        cursor: grabbing;
+        transform: translate(2px, 2px);
+        box-shadow: 3px 3px 0 #000, 0 0 0 1px rgba(245, 241, 232, 0.18);
+      }
+
+      .hint {
+        max-width: 300px;
+        color: var(--dim);
+        font-family: var(--mono);
+        font-size: 12px;
+        line-height: 1.45;
+      }
+
+      .secondary-btn {
+        display: inline-flex;
+        align-items: center;
+        min-height: 52px;
+        padding: 0 16px;
+        color: var(--ink);
+        font: inherit;
+        font-weight: 760;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid var(--line-strong);
+        cursor: pointer;
+      }
+
+      .secondary-btn:hover {
+        background: rgba(255, 255, 255, 0.1);
+      }
+
+      .install-note {
+        width: 100%;
+        max-width: 620px;
+        min-height: 18px;
+        margin: 4px 0 0;
+        color: var(--blue);
+        font-family: var(--mono);
+        font-size: 12px;
+        line-height: 1.45;
+      }
+
+      .demo-link {
+        color: var(--blue);
+        text-decoration: underline;
+        text-underline-offset: 4px;
+      }
+
+      .demo {
+        position: relative;
+        align-self: center;
+        min-height: 560px;
+        padding: 20px;
+        background: rgba(17, 16, 14, 0.68);
+        border: 1px solid var(--line);
+        box-shadow: var(--shadow);
+        backdrop-filter: blur(22px);
+      }
+
+      .demo::before {
+        position: absolute;
+        inset: 10px;
+        pointer-events: none;
+        content: "";
+        border: 1px dashed rgba(198, 255, 61, 0.32);
+      }
+
+      .browser {
+        position: relative;
+        height: 520px;
+        overflow: hidden;
+        background: #e9e0d2;
+        color: #15120f;
+        border: 1px solid #000;
+      }
+
+      .browser-bar {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        height: 34px;
+        padding: 0 10px;
+        background: #171411;
+        border-bottom: 1px solid #000;
+      }
+
+      .dot {
+        width: 8px;
+        height: 8px;
+        background: var(--coral);
+        border-radius: 999px;
+      }
+
+      .dot:nth-child(2) {
+        background: #ffd15c;
+      }
+
+      .dot:nth-child(3) {
+        background: #73e36c;
+      }
+
+      .browser-grid {
+        display: grid;
+        grid-template-columns: 0.8fr 1.2fr;
+        gap: 22px;
+        height: calc(100% - 34px);
+        padding: 26px;
+      }
+
+      .mock-copy {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        min-width: 0;
+      }
+
+      .mock-kicker {
+        margin-bottom: 10px;
+        font-family: var(--mono);
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+      }
+
+      .mock-title {
+        font-family: var(--display);
+        font-size: 50px;
+        line-height: 0.95;
+      }
+
+      .mock-text {
+        margin-top: 18px;
+        color: #574d42;
+        font-size: 14px;
+        line-height: 1.55;
+      }
+
+      .mock-card {
+        align-self: center;
+        min-height: 310px;
+        padding: 18px;
+        background: #15120f;
+        color: var(--ink);
+        border: 1px solid #000;
+        box-shadow: 10px 10px 0 rgba(0, 0, 0, 0.55);
+      }
+
+      .mock-card-title {
+        display: flex;
+        justify-content: space-between;
+        gap: 20px;
+        padding-bottom: 14px;
+        border-bottom: 1px solid rgba(245, 241, 232, 0.2);
+        font-family: var(--mono);
+        font-size: 11px;
+      }
+
+      .code-lines {
+        display: grid;
+        gap: 9px;
+        margin-top: 18px;
+      }
+
+      .line {
+        height: 9px;
+        background: rgba(245, 241, 232, 0.16);
+      }
+
+      .line:nth-child(1) {
+        width: 74%;
+        background: rgba(198, 255, 61, 0.7);
+      }
+
+      .line:nth-child(2) {
+        width: 92%;
+      }
+
+      .line:nth-child(3) {
+        width: 58%;
+        background: rgba(101, 214, 255, 0.6);
+      }
+
+      .line:nth-child(4) {
+        width: 83%;
+      }
+
+      .line:nth-child(5) {
+        width: 42%;
+      }
+
+      .selection-box {
+        position: absolute;
+        top: 182px;
+        left: 42px;
+        width: 210px;
+        height: 96px;
+        border: 2px solid var(--acid);
+        box-shadow: 0 0 0 999px rgba(17, 16, 14, 0.14);
+      }
+
+      .tag {
+        position: absolute;
+        top: -28px;
+        left: -2px;
+        padding: 5px 8px;
+        color: #11100e;
+        font-family: var(--mono);
+        font-size: 11px;
+        font-weight: 800;
+        background: var(--acid);
+      }
+
+      .mini-panel {
+        position: absolute;
+        right: 30px;
+        bottom: 28px;
+        width: min(320px, calc(100% - 60px));
+        padding: 14px;
+        color: var(--ink);
+        background: rgba(17, 16, 14, 0.94);
+        border: 1px solid rgba(245, 241, 232, 0.24);
+        box-shadow: 0 18px 60px rgba(0, 0, 0, 0.42);
+      }
+
+      .mini-panel strong {
+        display: block;
+        margin-bottom: 9px;
+        font-size: 13px;
+      }
+
+      .mini-panel p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.45;
+      }
+
+      .section {
+        padding: 70px 0;
+        border-top: 1px solid var(--line);
+      }
+
+      .section-head {
+        display: grid;
+        grid-template-columns: minmax(0, 0.7fr) minmax(280px, 0.3fr);
+        gap: 34px;
+        align-items: end;
+        margin-bottom: 30px;
+      }
+
+      h2 {
+        margin: 0;
+        font-family: var(--display);
+        font-size: clamp(42px, 6vw, 84px);
+        font-weight: 520;
+        line-height: 0.94;
+      }
+
+      .section-head p {
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.55;
+      }
+
+      .feature-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 1px;
+        background: var(--line);
+        border: 1px solid var(--line);
+      }
+
+      .feature {
+        min-height: 220px;
+        padding: 22px;
+        background: rgba(17, 16, 14, 0.92);
+      }
+
+      .feature .num {
+        color: var(--acid);
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+
+      .feature h3 {
+        margin: 42px 0 12px;
+        font-size: 19px;
+        line-height: 1.15;
+      }
+
+      .feature p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 14px;
+        line-height: 1.5;
+      }
+
+      .formats {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 18px;
+      }
+
+      .formats span {
+        padding: 8px 10px;
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 12px;
+        border: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.035);
+      }
+
+      .footer {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        gap: 18px;
+        padding: 30px 0 42px;
+        color: var(--dim);
+        font-family: var(--mono);
+        font-size: 12px;
+        border-top: 1px solid var(--line);
+      }
+
+      @media (max-width: 900px) {
+        .hero,
+        .section-head {
+          grid-template-columns: 1fr;
+        }
+
+        .hero {
+          min-height: 0;
+          padding-top: 46px;
+        }
+
+        .demo {
+          min-height: 0;
+        }
+
+        .feature-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+
+      @media (max-width: 620px) {
+        .nav {
+          align-items: flex-start;
+          flex-direction: column;
+          gap: 14px;
+          padding: 18px 0;
+        }
+
+        .nav-links {
+          width: 100%;
+          justify-content: space-between;
+        }
+
+        h1 {
+          font-size: 62px;
+        }
+
+        .lede {
+          font-size: 17px;
+        }
+
+        .browser-grid {
+          grid-template-columns: 1fr;
+          padding: 18px;
+        }
+
+        .mock-card {
+          display: none;
+        }
+
+        .selection-box {
+          top: 174px;
+          left: 30px;
+          width: 220px;
+        }
+
+        .feature-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="shell nav">
+      <a class="brand" href="#top" aria-label="Point2Prompt home">
+        <span class="mark" aria-hidden="true"></span>
+        <span>Point2Prompt</span>
+      </a>
+      <nav class="nav-links" aria-label="Primary">
+        <a href="#install">Install</a>
+        <a href="#features">Features</a>
+        <a href="https://github.com/LobsterQBA/point2prompt" data-github-link>GitHub</a>
+      </nav>
+    </header>
+
+    <main id="top">
+      <section class="shell hero" id="install">
+        <div>
+          <p class="eyebrow">Visual context for AI agents</p>
+          <h1>Point at your UI. Paste a perfect prompt.</h1>
+          <p class="lede">
+            Point2Prompt is a bookmarklet that lets you select real UI elements,
+            attach change intent, and copy a structured prompt for Claude Code,
+            Codex, Cursor, or a GitHub issue.
+          </p>
+          <div class="install-row">
+            <a class="bookmarklet" href="#" id="bookmarklet">Point2Prompt</a>
+            <button class="secondary-btn" type="button" id="copy-bookmarklet">Copy code</button>
+            <p class="hint">
+              Drag the green button to your bookmarks bar, or click it right
+              here to test on this page. Then open the
+              <a class="demo-link" href="demo.html">recording demo</a>.
+            </p>
+            <p class="install-note" id="install-note" aria-live="polite"></p>
+          </div>
+        </div>
+
+        <div class="demo" aria-label="Product demo illustration">
+          <div class="browser">
+            <div class="browser-bar">
+              <span class="dot"></span>
+              <span class="dot"></span>
+              <span class="dot"></span>
+            </div>
+            <div class="browser-grid">
+              <div class="mock-copy">
+                <div class="mock-kicker">Localhost:3000</div>
+                <div class="mock-title">Tell the agent exactly where to work.</div>
+                <div class="mock-text">
+                  Stop writing "the small text under the second card." Select it,
+                  choose the intent, and ship the context your coding agent needs.
+                </div>
+              </div>
+              <div class="mock-card">
+                <div class="mock-card-title">
+                  <span>Change brief</span>
+                  <span>Codex</span>
+                </div>
+                <div class="code-lines" aria-hidden="true">
+                  <span class="line"></span>
+                  <span class="line"></span>
+                  <span class="line"></span>
+                  <span class="line"></span>
+                  <span class="line"></span>
+                </div>
+              </div>
+            </div>
+            <div class="selection-box">
+              <span class="tag">h1.hero-title</span>
+            </div>
+            <div class="mini-panel">
+              <strong>Intent: Improve visual hierarchy</strong>
+              <p>
+                Includes DOM selector, text, bounding box, computed styles,
+                React source hints, and your instruction.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="shell section" id="features">
+        <div class="section-head">
+          <h2>The missing pointing layer for AI coding.</h2>
+          <p>
+            Coding agents are good at changing files. Humans are good at seeing
+            what feels wrong. Point2Prompt connects those two worlds.
+          </p>
+        </div>
+        <div class="feature-grid">
+          <article class="feature">
+            <div class="num">01</div>
+            <h3>Select real UI, not vague descriptions</h3>
+            <p>
+              Click any element, shift-click for multi-select, or walk the DOM
+              with keyboard navigation.
+            </p>
+          </article>
+          <article class="feature">
+            <div class="num">02</div>
+            <h3>Attach intent before copying</h3>
+            <p>
+              Pick presets like copy, spacing, hierarchy, contrast, responsive
+              layout, or write your own instruction.
+            </p>
+          </article>
+          <article class="feature">
+            <div class="num">03</div>
+            <h3>Export for your workflow</h3>
+            <p>
+              Switch between formats for Claude Code, Codex, Cursor, GitHub
+              issues, or plain Markdown.
+            </p>
+          </article>
+          <article class="feature">
+            <div class="num">04</div>
+            <h3>Everything stays client-side</h3>
+            <p>
+              The bookmarklet injects local UI into the page. No account, no
+              backend, no telemetry, no uploaded DOM.
+            </p>
+          </article>
+        </div>
+        <div class="formats" aria-label="Supported output formats">
+          <span>Claude Code</span>
+          <span>Codex</span>
+          <span>Cursor</span>
+          <span>GitHub Issue</span>
+          <span>Markdown</span>
+        </div>
+      </section>
+    </main>
+
+    <footer class="shell footer">
+      <span>MIT licensed. Built for people who vibe-code through the browser.</span>
+      <span>Point2Prompt v0.1</span>
+    </footer>
+
+    <script>
+      const VERSION = "0.1.0";
+      const assetBase = new URL("assets/", window.location.href).href;
+      const loader = `javascript:(()=>{const w=window;if(w.__POINT2PROMPT__){w.__POINT2PROMPT__.toggle();return;}const b=${JSON.stringify(assetBase)};const v=${JSON.stringify(VERSION)};const css=document.createElement('link');css.rel='stylesheet';css.href=b+'editor.css?v='+v;document.head.appendChild(css);const s=document.createElement('script');s.src=b+'editor.js?v='+v;s.onload=()=>w.__POINT2PROMPT__&&w.__POINT2PROMPT__.open();document.head.appendChild(s);})()`;
+      const button = document.getElementById("bookmarklet");
+      const copyButton = document.getElementById("copy-bookmarklet");
+      const note = document.getElementById("install-note");
+      button.href = loader;
+      button.addEventListener("click", (event) => {
+        button.animate(
+          [
+            { transform: "translateY(0)" },
+            { transform: "translateY(-4px)" },
+            { transform: "translateY(0)" }
+          ],
+          { duration: 240, easing: "ease-out" }
+        );
+        note.textContent = "Testing Point2Prompt on this page. If a bookmark jumps back here, edit that bookmark and paste the copied code as its URL.";
+      });
+      copyButton.addEventListener("click", async () => {
+        try {
+          await navigator.clipboard.writeText(loader);
+          note.textContent = "Bookmarklet code copied. Create or edit a bookmark and paste this code into the URL field.";
+        } catch (error) {
+          note.textContent = "Copy failed. Drag the green button, then check the bookmark URL starts with javascript:.";
+        }
+      });
+    </script>
+  </body>
+</html>
